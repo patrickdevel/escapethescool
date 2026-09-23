@@ -100,7 +100,7 @@ canvas{display:block}
   </div>
 
   <p class="hint dk"><span class="k">WASD</span> laufen · <span class="k">Maus</span> umsehen · <span class="k">Linksklick</span> benutzen · <span class="k">Leertaste</span> springen · <span class="k">Shift</span> rennen · <span class="k">M</span> Karte · <span class="k">I</span> Inventar</p>
-  <p class="hint mb">Links wischen = laufen (weit = rennen) · Rechts wischen = umsehen<br><span class="k">Tippen</span> = benutzen · <span class="k">⤒</span> = springen · 🎒 = Inventar · Minikarte antippen = Karte</p>
+  <p class="hint mb">Links wischen = laufen (weit = rennen) · Rechts wischen = umsehen<br><span class="k">Tippen (rechts)</span> = benutzen · <span class="k">⤒</span> = springen · 🎒 = Inventar · Minikarte antippen = Karte</p>
 </div>
 
 <div id="worlds" class="ov" style="display:none">
@@ -235,7 +235,7 @@ const sfx={
   wind:()=>{nse(2.5,300,.05,'bandpass',0,180,.4);tone(140,2.0,.03,'sine',0,90)},
   heartbeat:()=>{tone(55,.15,.08,'sine');tone(55,.2,.06,'sine',.2)},
   squeak:()=>{nse(.35,1500,.04,'bandpass',0,700,.8);tone(900,.3,.02,'triangle',0,500)},
-  music:()=>{ // kleine Melodie
+  music:()=>{
     const notes=[[523,.35],[587,.35],[659,.35],[698,.5],[659,.35],[523,.7]];
     let t=0;for(const [f,d] of notes){tone(f,d,.06,'triangle',t);t+=d}
   },
@@ -664,13 +664,36 @@ chBulb.position.set(CX+13,3.25,0);scene.add(chBulb);
 const chLight=new THREE.PointLight(0xffe0a0,.7,7,1.5);chLight.position.set(CX+13,3.0,0);scene.add(chLight);
 const chPipes=gPipes();chPipes.position.set(CX+14.5,0,-3.5);chPipes.rotation.y=-Math.PI/2;scene.add(chPipes);
 
+// Keller-Treppe hoch ins EG (sichtbar)
+for(let k=0;k<6;k++)box(CX-9.4+k*.28,(k+1)*.275,-1.6,.28,(k+1)*.55,1.2,0x8a8478,true,-1);
+sign('TREPPE AUF',CX-9.5,2.6,-2.4,Math.PI/2,1.3,.34,'#3a2a1a','#ffe9a8');
+
 function photoT(k){return tex(256,192,(g)=>{g.fillStyle='#141210';g.fillRect(0,0,256,192);g.fillStyle='rgba(120,90,75,.4)';g.fillRect(20,20,216,152);g.fillStyle='#060606';
  if(k===0){g.beginPath();g.arc(128,62,16,0,7);g.fill();g.fillRect(112,78,32,62);g.fillRect(98,140,60,9)}
  else if(k===1){for(let r=0;r<3;r++)for(let i=0;i<5;i++){g.beginPath();g.arc(42+i*42,60+r*42,8,0,7);g.fill();g.fillRect(33+i*42,69+r*42,18,24)}}
  else{g.fillRect(58,98,140,74);g.fillStyle='#c8b070';g.beginPath();g.arc(128,44,13,0,7);g.fill()}})}
+
+const texLoader=new THREE.TextureLoader();
+const PH_URLS=['teacher.png','class.png','circle.png'];
 const PH=[[-6,'Ein Lehrer. Auf der Rückseite steht: „1998. Regenpause."'],[0,'Eine ganze Klasse. Ihre Gesichter sind unkenntlich gemacht.'],[6,'Eine Karte des Schulhofs. Ein Kreis markiert diesen Keller.']];
-PH.forEach((p,k)=>{const m=new THREE.Mesh(new THREE.PlaneGeometry(2,1.5),new THREE.MeshLambertMaterial({map:photoT(k)}));m.position.set(CX+p[0],1.8,-7.8);scene.add(m);
- const fr=new THREE.Mesh(new THREE.BoxGeometry(2.14,1.64,.06),mat(0x2a2118));fr.position.set(CX+p[0],1.8,-7.86);scene.add(fr)});
+
+PH.forEach((p,k)=>{
+  const fallback=photoT(k);
+  fallback.encoding=THREE.sRGBEncoding;
+  const mtl=new THREE.MeshLambertMaterial({map:fallback});
+  const m=new THREE.Mesh(new THREE.PlaneGeometry(2,1.5),mtl);
+  m.position.set(CX+p[0],1.8,-7.8);
+  scene.add(m);
+  // echte PNG laden (Fallback bleibt, falls Datei fehlt)
+  texLoader.load(PH_URLS[k],(t)=>{
+    t.encoding=THREE.sRGBEncoding;
+    mtl.map=t;
+    mtl.needsUpdate=true;
+  },undefined,()=>{/* Fehler → Fallback bleibt aktiv */});
+  const fr=new THREE.Mesh(new THREE.BoxGeometry(2.14,1.64,.06),mat(0x2a2118));
+  fr.position.set(CX+p[0],1.8,-7.86);
+  scene.add(fr);
+});
 box(CX,1.1,7.8,1.5,2.2,.12,0x5a3a20);sign('AUSGANG',CX,2.5,7.7,Math.PI,1.4,.32,'#3a1a1a','#ff9a7a');
 
 /* ===== HINTERHOF ===== */
@@ -763,7 +786,6 @@ W(AX-15.15,AX-14.85,-10,10,0,AH,0x4a3520,2);
 W(AX+14.85,AX+15.15,-10,10,0,AH,0x4a3520,2);
 W(AX-15,AX+15,-10.15,-9.85,0,AH,0x4a3520,2);
 W(AX-15,AX+15,9.85,10.15,0,AH,0x4a3520,2);
-// Dachbalken (A-Form)
 for(let x=AX-13.5;x<=AX+13.5;x+=3){
   const bl=new THREE.Mesh(new THREE.BoxGeometry(.18,2.6,.18),mat(0x2a1e12));
   bl.position.set(x,2.5,-5.5);bl.rotation.z=.65;scene.add(bl);
@@ -772,7 +794,6 @@ for(let x=AX-13.5;x<=AX+13.5;x+=3){
   const bh=new THREE.Mesh(new THREE.BoxGeometry(.16,.16,11),mat(0x2a1e12));
   bh.position.set(x,3.55,0);scene.add(bh);
 }
-// Rundfenster
 const roundWin=new THREE.Mesh(new THREE.CircleGeometry(1,20),new THREE.MeshBasicMaterial({color:0x6a9cc8,transparent:true,opacity:.55}));
 roundWin.position.set(AX+14.8,2,-3);roundWin.rotation.y=-Math.PI/2;scene.add(roundWin);
 const winFrame=new THREE.Mesh(new THREE.TorusGeometry(1.05,.1,8,22),mat(0x2a1e12));
@@ -781,13 +802,11 @@ for(let i=0;i<4;i++){
   const spoke=new THREE.Mesh(new THREE.BoxGeometry(.06,2,.06),mat(0x2a1e12));
   spoke.position.set(AX+14.78,2,-3);spoke.rotation.y=-Math.PI/2;spoke.rotation.x=i*Math.PI/4;scene.add(spoke);
 }
-// Kisten
 for(const p of[[-10,-5],[-9,3],[5,-6],[8,4],[-3,7],[12,0],[-12,8]]){
   const s=.6+Math.random()*.5;
   const bx2=box(AX+p[0],s/2,p[1],s,s,s,0x6b4a2a,true,2);
   bx2.rotation.y=Math.random()*1.5;
 }
-// Matratze (Miras Bett)
 const bedBase=new THREE.Mesh(new THREE.BoxGeometry(2.2,.25,1.1),mat(0x5a3a20));
 bedBase.position.set(AX-8,.125,-7);scene.add(bedBase);
 const mattress=new THREE.Mesh(new THREE.BoxGeometry(2,.18,1),mat(0x8a7a5a));
@@ -797,62 +816,49 @@ pillow.position.set(AX-8.7,.5,-7);scene.add(pillow);
 const blanket=new THREE.Mesh(new THREE.BoxGeometry(1.2,.1,.95),mat(0x5a4a6a));
 blanket.position.set(AX-7.6,.48,-7);scene.add(blanket);
 col.push({a:AX-9.1,b:AX-6.9,c:-7.55,e:-6.45,f:2});
-// Kleiner Tisch mit Musikbox
 const aTable=gDesk(1.2,.7,.7,0x5a3f28);
 aTable.position.set(AX+10,0,-7);scene.add(aTable);
 col.push({a:AX+9.4,b:AX+10.6,c:-7.4,e:-6.6,f:2});
 const aChair=gChair(0x3a2a1a);aChair.position.set(AX+10,0,-5.9);aChair.rotation.y=Math.PI;scene.add(aChair);
-// Musikbox
 const musicBox=new THREE.Group();
 const mbBody=new THREE.Mesh(new THREE.BoxGeometry(.4,.25,.3),mat(0x8a5a2a));mbBody.position.y=.125;musicBox.add(mbBody);
 const mbTop=new THREE.Mesh(new THREE.BoxGeometry(.42,.04,.32),mat(0x5a3a1a));mbTop.position.y=.27;musicBox.add(mbTop);
 const mbKey=new THREE.Mesh(new THREE.CylinderGeometry(.04,.04,.12,6),mat(0xb0a040));mbKey.position.set(.24,.14,0);mbKey.rotation.z=Math.PI/2;musicBox.add(mbKey);
 musicBox.position.set(AX+10,0.75,-7);scene.add(musicBox);
 const mbLight=new THREE.PointLight(0xffd0a0,.5,4,1.5);mbLight.position.set(AX+10,1.2,-7);scene.add(mbLight);
-// Zeichnungen an der Wand
 for(let i=0;i<3;i++){
   const d=new THREE.Mesh(new THREE.PlaneGeometry(.7,.9),new THREE.MeshBasicMaterial({map:tex(128,160,(g)=>{
     g.fillStyle='#e8dcc0';g.fillRect(0,0,128,160);
     g.strokeStyle='#4a3a2a';g.lineWidth=2;
-    // Sonne
     g.beginPath();g.arc(20,25,8,0,7);g.stroke();
-    // Person
     g.beginPath();g.arc(64,50,15,0,7);g.stroke();
     g.beginPath();g.moveTo(64,65);g.lineTo(64,110);g.stroke();
     g.beginPath();g.moveTo(64,80);g.lineTo(40,95);g.moveTo(64,80);g.lineTo(88,95);g.stroke();
     g.beginPath();g.moveTo(64,110);g.lineTo(48,140);g.moveTo(64,110);g.lineTo(80,140);g.stroke();
-    // Zweite Person
     g.beginPath();g.arc(95,55,12,0,7);g.stroke();
     g.beginPath();g.moveTo(95,67);g.lineTo(95,105);g.stroke();
-    // Haus
     g.strokeRect(5,110,50,40);
     g.beginPath();g.moveTo(5,110);g.lineTo(30,90);g.lineTo(55,110);g.stroke();
-    // Text
     g.fillStyle='#4a3a2a';g.font='10px serif';
     g.fillText('Mira & M.',20,155);
   })}));
   d.position.set(AX-11+i*1.2,2.3,-9.88);scene.add(d);
 }
-// Koffer
 const suitcase=new THREE.Group();
 const scBody=new THREE.Mesh(new THREE.BoxGeometry(1.1,.35,.7),mat(0x5a2f1f));scBody.position.y=.175;suitcase.add(scBody);
 const scLid=new THREE.Mesh(new THREE.BoxGeometry(1.1,.08,.7),mat(0x3a1f12));scLid.position.y=.39;suitcase.add(scLid);
 const scHandle=new THREE.Mesh(new THREE.TorusGeometry(.09,.02,6,10),mat(0x8a7a4a));scHandle.position.y=.5;scHandle.rotation.x=Math.PI/2;suitcase.add(scHandle);
 suitcase.position.set(AX-3,0,6);suitcase.rotation.y=.4;scene.add(suitcase);
 col.push({a:AX-3.6,b:AX-2.4,c:5.5,e:6.5,f:2});
-// Alter Spiegel
 const mirror=new THREE.Mesh(new THREE.PlaneGeometry(1,.7),new THREE.MeshBasicMaterial({color:0x8a8a9a,transparent:true,opacity:.5}));
 mirror.position.set(AX+3,2,-9.85);scene.add(mirror);
 const mirrorFrame=new THREE.Mesh(new THREE.BoxGeometry(1.15,.85,.06),mat(0x2a1e12));
 mirrorFrame.position.set(AX+3,2,-9.92);scene.add(mirrorFrame);
-// Deckenlampe
 const atticBulb=new THREE.Mesh(new THREE.SphereGeometry(.13,8,6),new THREE.MeshBasicMaterial({color:0xffd0a0}));
 atticBulb.position.set(AX,2.9,0);scene.add(atticBulb);
 const atticLight=new THREE.PointLight(0xffd0a0,.85,18,1.5);
 atticLight.position.set(AX,2.8,0);scene.add(atticLight);
-// Schild am Aufgang
 sign('DACHBODEN',AX,2.4,9.5,Math.PI,1.4,.32,'#2a1a0a','#ffe9a8');
-// Luke zum Rückweg
 box(AX,0.05,5,1.6,.1,1.6,0x2a1a0a,false,2);
 
 /* ===== Extras Obergeschoss/Erdgeschoss ===== */
@@ -931,9 +937,9 @@ function announce(t){say('🔊 Durchsage: '+t,5.5);sfx.chime();flash=4.5;
 
 /* ===== INVENTAR ===== */
 const inv=[];
-function addItem(id,name,icon,desc){
+function addItem(id,name,icon,desc,text){
   if(inv.find(i=>i.id===id))return;
-  inv.push({id,name,icon,desc});
+  inv.push({id,name,icon,short:desc,desc:text||desc});
   say('🎒 '+name+' erhalten',3.2);
   sfx.pickup();
   $('invCount').textContent=inv.length;
@@ -941,8 +947,22 @@ function addItem(id,name,icon,desc){
 }
 function renderInv(){
   const g=$('invGrid');
+  $('invSub').textContent='Deine Fundstücke';
   if(!inv.length){g.innerHTML='<div style="grid-column:1/-1;color:#7f8ea8;text-align:center;padding:20px">Dein Rucksack ist noch leer.<br>Suche nach Gegenständen in der Welt.</div>';return}
-  g.innerHTML=inv.map(i=>`<div class="wcard lock"><span>${i.icon}</span><b>${i.name}</b><i>${i.desc||''}</i></div>`).join('');
+  g.innerHTML=inv.map((i,idx)=>`<div class="wcard lock" data-i="${idx}" style="cursor:pointer"><span>${i.icon}</span><b>${i.name}</b><i>${i.short||''}</i></div>`).join('');
+  g.querySelectorAll('[data-i]').forEach(el=>{
+    el.onclick=()=>{sfx.click();showItem(inv[+el.dataset.i])};
+  });
+}
+function showItem(i){
+  const g=$('invGrid');
+  $('invSub').textContent=i.name;
+  g.innerHTML=`<div style="grid-column:1/-1;padding:8px 4px">
+    <div style="font-size:56px;text-align:center;line-height:1;margin-top:4px">${i.icon}</div>
+    <div style="color:#c6d2e2;line-height:1.75;white-space:pre-wrap;font-size:13.5px;background:rgba(255,255,255,.03);padding:16px 18px;border-radius:12px;border:1px solid rgba(255,233,168,.22);max-height:52vh;overflow:auto;margin-top:16px;text-align:left">${i.desc||'—'}</div>
+    <div style="text-align:center;margin-top:18px"><button class="ghost" id="invBack">ZURÜCK</button></div>
+  </div>`;
+  $('invBack').onclick=()=>{sfx.click();renderInv()};
 }
 function openInv(){if(invOpen)return;invOpen=true;canMove=false;$('inv').style.display='flex';renderInv();sfx.ui();document.exitPointerLock?.()}
 function closeInv(){invOpen=false;canMove=true;$('inv').style.display='none';sfx.ui();if(!touch)document.body.requestPointerLock?.()}
@@ -952,7 +972,7 @@ $('bInv').onclick=openInv;$('invClose').onclick=closeInv;
 let chestState='closed',chestT=0;
 let letterState='hidden',letterT=0;
 
-/* ===== 14 Aufgaben (Kapitel 1+2+3) ===== */
+/* ===== 14 Aufgaben ===== */
 const Q=[
  {t:'Die Notiz finden',d:'Im Sekretariat liegt etwas auf dem Schreibtisch.',n:'Sekretariat',f:0,x:-18.5,z:-6},
  {t:'Spind 47 öffnen',d:'Die Notiz verweist auf Spind 47 in der Umkleide.',n:'Umkleide',f:0,x:-7.6,z:8.5},
@@ -993,13 +1013,20 @@ const note=new THREE.Mesh(new THREE.PlaneGeometry(.4,.5),new THREE.MeshBasicMate
 note.position.set(-18.5,.85,-6);note.rotation.x=-Math.PI/2;note.rotation.z=.3;scene.add(note);
 addI(hb(-18.5,1.25,-6,1.1,1.9,1.1,0),-18.5,-6,0,'Notiz aufheben',()=>{if(q>0)return;q=1;note.visible=false;sfx.pickup();sfx.paper();
  say('„Spind 47 in der Umkleide. Der Schlüssel liegt dort versteckt. – M.“',5);renderQ();sfx.quest();
- addItem('note','Notiz von M.','📝','„Spind 47. Der Schlüssel ist dort. – M."')});
+ addItem('note','Notiz von M.','📝','Spind 47, Umkleide.',
+`„Spind 47 in der Umkleide.
+Der Schlüssel liegt dort versteckt.
+
+– M."`)});
 
 addI(hb(-7.6,1.1,8.5,1.0,2.2,1.0,0),-7.6,8.5,0,'Spind 47 öffnen',()=>{
  if(q<1){sfx.error();return say('Ein verschlossener Spind. Ich sollte erst herausfinden, was hier los ist.',3.5)}
  if(q>1)return;q=2;sfx.unlock();sfx.pickup();
  say('Du findest einen kleinen, rostigen Schlüssel.',4);renderQ();sfx.quest();
- addItem('schluessel1','Rostiger Schlüssel','🗝️','Öffnet die Kellertür.');
+ addItem('schluessel1','Rostiger Schlüssel','🗝️','Passt vermutlich zur Kellertür.',
+`Ein kleiner, rostiger Schlüssel.
+Er passt vermutlich zur Kellertür
+im Hausmeisterraum.`);
  setTimeout(()=>announce('Der Zugang zum Keller ist ab sofort untersagt.'),4500)});
 
 box(26.0,1.15,8.5,.1,2.3,1.4,0x5a3a20,true,0);
@@ -1033,7 +1060,16 @@ addI(hb(CX+13,1.3,-2,1.0,1.3,1.0,-1),CX+13,-2,-1,'Tagebuch lesen',()=>{
  sfx.paper();sfx.chime();
  say('Tagebuch: „14. November 1998. Der Regen hörte nicht auf. M. K. verschwand während der Pause. Keiner fragte nach ihr. Ich habe die Fotos versteckt, damit die Wahrheit nicht stirbt."',9);
  q=6;renderQ();sfx.quest();
- addItem('tagebuch','Tagebuch','📔','M.K.s Notizen von 1998.');
+ addItem('tagebuch','Tagebuch','📔','M. K.s Notizen von 1998.',
+`Tagebuch von M. K.
+
+„14. November 1998.
+Der Regen hörte nicht auf.
+M. K. verschwand während der Pause.
+Keiner fragte nach ihr.
+
+Ich habe die Fotos versteckt,
+damit die Wahrheit nicht stirbt."`);
  setTimeout(()=>say('Der Weg nach draußen ist frei. Beeil dich, bevor jemand kommt!',5),9500);
 },2.4);
 
@@ -1047,6 +1083,15 @@ addI(hb(CX,1.3,7.7,2.0,2.6,.8,-1),CX,7.8,-1,'Hintertür öffnen',()=>{
    setTimeout(()=>say('Zwischen den Kisten liegt etwas, das im Licht der Laterne glitzert.',5),6000);
  },800)},2.4);
 
+// NEU: Treppe vom Keller zurück ins EG (Rückweg!)
+addI(hb(CX-9.2,1.6,-1.6,1.4,3.0,2.4,-1),CX-9.2,-1.6,-1,'Treppe hinauf ins EG',()=>{
+  sfx.step(true);sfx.door();
+  fadeTo(()=>{
+    P.x=24;P.z=8.5;P.f=0;P.fy=0;P.yOff=0;P.vy=0;P.air=false;
+    say('Du steigst die knarrende Treppe wieder hinauf ins Erdgeschoss.',3.5);
+  },500);
+},2.6);
+
 addI(hb(CX-10.3,.4,13.3,1.0,1.0,1.0,-2),CX-10.3,13.3,-2,'Schlüssel aufheben',()=>{
  if(q<7){sfx.error();return say('Ein rostiger Schlüssel. Aber ich habe noch eine andere Aufgabe.',3)}
  if(q>7)return;
@@ -1054,7 +1099,10 @@ addI(hb(CX-10.3,.4,13.3,1.0,1.0,1.0,-2),CX-10.3,13.3,-2,'Schlüssel aufheben',()
  say('Du hebst einen kleinen Schlüssel auf. Er ist eiskalt, als hätte er hier jahrelang gelegen.',5);
  keyMesh.visible=false;keyGlow.visible=false;
  q=8;renderQ();sfx.quest();
- addItem('schluessel2','Kleiner Schlüssel','🔑','Eiskalt. Passt vielleicht zu einer Truhe.');
+ addItem('schluessel2','Kleiner Schlüssel','🔑','Eiskalt. Passt zu einer Truhe.',
+`Ein eiskalter, kleiner Schlüssel.
+Er lag zwischen den Kisten im Hinterhof.
+Er passt vielleicht zu einer Truhe.`);
  setTimeout(()=>say('Vielleicht passt er zu der Truhe in der Hütte.',5),6000);
 },2.2);
 
@@ -1073,7 +1121,20 @@ addI(hb(CX+6.5,1.5,Sz2-2.1,1.2,1.2,.6,-2),CX+6.5,Sz2-2.1,-2,'Brief lesen',()=>{
  sfx.paper();sfx.chime();sfx.heartbeat();
  say('„An den, der dies findet. Ich heiße Mira K. Ich verstecke mich hier, weil ich keine Wahl hatte. Wenn du das liest, bin ich längst fort. Sag Mama, dass ich sie liebhabe. – Mira"',14);
  q=10;renderQ();sfx.quest();
- addItem('brief','Miras Brief','💌','Ihr letzter Brief an ihre Mutter.');
+ addItem('brief','Miras Brief','💌','Ihr letzter Brief an ihre Mutter.',
+`„An den, der dies findet.
+
+Ich heiße Mira K.
+Ich verstecke mich hier,
+weil ich keine Wahl hatte.
+
+Wenn du das liest,
+bin ich längst fort.
+
+Sag Mama,
+dass ich sie liebhabe.
+
+– Mira"`);
  setTimeout(()=>say('Eine steile Leiter führt im Obergeschoss nach oben. Vielleicht war sie dort.',6),14500);
 },2.0);
 
@@ -1094,7 +1155,6 @@ addI(hb(CX,1.5,9.0,2.4,3.0,.6,-2),CX,9.0,-2,'Zurück in den Keller',()=>{
     say('Du gehst zurück in den muffigen Keller.',3)},500);
 },2.4);
 
-// Leiter zum Dachboden (im Obergeschoss, an der Treppe)
 addI(hb(-42.5,UB+3.2,-.5,1.6,1.0,1.6,1),-42.5,-.5,1,'Leiter zum Dachboden',()=>{
   if(q<10){sfx.error();return say('Eine Luke zur Decke. Aber ich habe noch offene Fragen hier unten.',3)}
   sfx.step(true);sfx.wood();
@@ -1106,42 +1166,50 @@ addI(hb(-42.5,UB+3.2,-.5,1.6,1.0,1.6,1),-42.5,-.5,1,'Leiter zum Dachboden',()=>{
   },500);
 },2.4);
 
-// Zurück vom Dachboden
 addI(hb(AX,1.4,5,2.0,2.6,2.0,2),AX,5,2,'Zurück hinunter',()=>{
   sfx.step(true);sfx.wood();
   fadeTo(()=>{P.x=-41;P.z=-.5;P.f=1;P.fy=UB;P.yOff=0;P.vy=0;P.air=false;
     say('Du steigst wieder hinunter ins Obergeschoss.',3)},500);
 },2.4);
 
-// Zeichnungen ansehen
 addI(hb(AX-11,2.3,-9.5,2.6,1.2,.6,2),AX-10.5,-9.5,2,'Zeichnungen ansehen',()=>{
   if(q<11){sfx.error();return say('Kinderzeichnungen. Vielleicht später genauer ansehen.',3)}
   if(q>11)return;
   sfx.paper();
   say('An der Wand hängen Kinderzeichnungen. Ein Mädchen, ein Junge, ein Haus, eine Sonne. Unten steht: „Mira & M."',7);
   q=12;renderQ();sfx.quest();
-  addItem('zeichnung','Alte Zeichnung','🎨','Ein Kinderbild von Mira und ihrem Bruder.');
+  addItem('zeichnung','Alte Zeichnung','🎨','Ein Kinderbild von Mira und ihrem Bruder.',
+`Eine Kinderzeichnung.
+Ein Mädchen, ein Junge,
+ein Haus, eine Sonne.
+Unten steht: „Mira & M."`);
   setTimeout(()=>say('Auf dem Tisch am Fenster steht eine kleine Spieluhr.',5),7500);
 },2.4);
 
-// Koffer öffnen
 addI(hb(AX-3,.5,6,1.4,1.0,1.0,2),AX-3,6,2,'Koffer öffnen',()=>{
   if(q<12){sfx.error();return say('Ein alter Koffer. Vielleicht sollte ich erst die Zeichnungen ansehen.',3)}
   if(q>12)return;
   sfx.wood();sfx.pickup();
   say('Im Koffer findest du ein kleines Amulett und verblasste Fotos. Mira hat hier wirklich gelebt.',6);
   q=13;renderQ();sfx.quest();
-  addItem('talisman','Miras Glücksbringer','🍀','Ein kleines Amulett, das sie immer bei sich trug.');
+  addItem('talisman','Miras Glücksbringer','🍀','Ein Amulett, das sie immer trug.',
+`Ein kleines Amulett.
+Mira hat es immer bei sich getragen.
+Es ist warm, als hätte es eben
+noch jemand gehalten.`);
   setTimeout(()=>say('Die Spieluhr wartet noch.',4),6500);
 },2.4);
 
-// Spieluhr aufziehen - FINALE
 addI(hb(AX+10,1.1,-7,1.2,1.0,1.0,2),AX+10,-7,2,'Spieluhr aufziehen',()=>{
   if(q<13){sfx.error();return say('Eine kleine Spieluhr. Vielleicht später.',3)}
   if(q>13)return;
   sfx.music();sfx.chime();
   say('Du drehst den kleinen Schlüssel. Die Spieluhr beginnt eine leise, melancholische Melodie zu spielen...',10);
-  addItem('spieluhr','Spieluhr','🎵','Spielt Miras Melodie.');
+  addItem('spieluhr','Spieluhr','🎵','Spielt Miras Melodie.',
+`Eine kleine, hölzerne Spieluhr.
+Wenn man den Schlüssel dreht,
+spielt sie eine leise,
+melancholische Melodie.`);
   mbKey.rotation.z=0;
   q=14;renderQ();sfx.quest();
   setTimeout(()=>say('Die Melodie hallt durch den Dachboden. Miras Geschichte ist endlich erzählt.',8),10000);
@@ -1254,23 +1322,76 @@ onmousemove=e=>{
 };
 $('bE').ontouchstart=e=>{e.preventDefault();jump()};
 
-let tx=0,ty=0,mx=0,my=0,tch=false,tst=0;
+/* ===== Multitouch: linke Hälfte = Laufen, rechte Hälfte = Umsehen (gleichzeitig!) ===== */
+let moveId=null, lookId=null;
+let moveStartX=0, moveStartY=0, moveX=0, moveY=0;
+let lookLastX=0, lookLastY=0;
+let tapT=0, tapStartX=0, tapStartY=0, tapMoved=false;
+
+function inUI(t){
+  if(menuOpen||ended||mapOpen||invOpen)return true;
+  const el=document.elementFromPoint(t.clientX,t.clientY);
+  return el&&(el.closest('#mt')||el.closest('#mx')||el.closest('#mini')||el.closest('#bE')||el.closest('#bInv')||el.closest('#inv')||el.closest('#menu')||el.closest('#end'));
+}
 document.addEventListener('touchstart',e=>{
- if(menuOpen||ended||mapOpen||invOpen||e.target.closest('#mt')||e.target.closest('#mx')||e.target.closest('#mini')||e.target.closest('#bE')||e.target.closest('#bInv'))return;
- const t=e.touches[0];tx=t.clientX;ty=t.clientY;mx=0;my=0;tch=true;tst=performance.now();
- $('jb').style.display='block';$('jk').style.display='block';
- $('jb').style.left=tx+'px';$('jb').style.top=ty+'px';$('jk').style.left=tx+'px';$('jk').style.top=ty+'px';
+ for(const t of e.changedTouches){
+  if(inUI(t))continue;
+  if(t.clientX<innerWidth/2){
+    if(moveId===null){
+      moveId=t.identifier;
+      moveStartX=t.clientX; moveStartY=t.clientY;
+      moveX=0; moveY=0;
+      $('jb').style.display='block';$('jk').style.display='block';
+      $('jb').style.left=t.clientX+'px';$('jb').style.top=t.clientY+'px';
+      $('jk').style.left=t.clientX+'px';$('jk').style.top=t.clientY+'px';
+    }
+  } else {
+    if(lookId===null){
+      lookId=t.identifier;
+      lookLastX=t.clientX; lookLastY=t.clientY;
+      tapT=performance.now(); tapStartX=t.clientX; tapStartY=t.clientY; tapMoved=false;
+    }
+  }
+ }
 },{passive:false});
-document.addEventListener('touchmove',e=>{if(!tch)return;e.preventDefault();const t=e.touches[0];
- if(tx<innerWidth/2){mx=t.clientX-tx;my=t.clientY-ty;const D=Math.hypot(mx,my),max=36;
-  if(D>max){mx*=max/D;my*=max/D}
-  $('jk').style.left=(tx+mx)+'px';$('jk').style.top=(ty+my)+'px';
- }else{yaw-=(t.clientX-tx)*.004*S.sens;pitch-=(t.clientY-ty)*.004*S.sens;
-  pitch=Math.max(-1.5,Math.min(1.5,pitch));tx=t.clientX;ty=t.clientY;}
+
+document.addEventListener('touchmove',e=>{
+ let handled=false;
+ for(const t of e.changedTouches){
+  if(t.identifier===moveId){
+    handled=true;
+    moveX=t.clientX-moveStartX;
+    moveY=t.clientY-moveStartY;
+    const D=Math.hypot(moveX,moveY),max=36;
+    if(D>max){moveX*=max/D;moveY*=max/D}
+    $('jk').style.left=(moveStartX+moveX)+'px';
+    $('jk').style.top=(moveStartY+moveY)+'px';
+  } else if(t.identifier===lookId){
+    handled=true;
+    const dx=t.clientX-lookLastX, dy=t.clientY-lookLastY;
+    yaw-=dx*.004*S.sens;
+    pitch-=dy*.004*S.sens;
+    pitch=Math.max(-1.5,Math.min(1.5,pitch));
+    lookLastX=t.clientX; lookLastY=t.clientY;
+    if(Math.hypot(t.clientX-tapStartX,t.clientY-tapStartY)>12)tapMoved=true;
+  }
+ }
+ if(handled)e.preventDefault();
 },{passive:false});
-document.addEventListener('touchend',e=>{if(!tch)return;tch=false;$('jb').style.display='none';$('jk').style.display='none';
- if(tx<innerWidth/2){mx=0;my=0;if(performance.now()-tst<250&&Math.hypot(mx,my)<10&&near)use(near)}
- else if(performance.now()-tst<250&&near)use(near)});
+
+function endTouch(e){
+ for(const t of e.changedTouches){
+  if(t.identifier===moveId){
+    moveId=null; moveX=0; moveY=0;
+    $('jb').style.display='none';$('jk').style.display='none';
+  } else if(t.identifier===lookId){
+    if(!tapMoved && performance.now()-tapT<280 && near)use(near);
+    lookId=null;
+  }
+ }
+}
+document.addEventListener('touchend',endTouch);
+document.addEventListener('touchcancel',endTouch);
 
 let LT=0;
 function loop(T){
@@ -1283,9 +1404,9 @@ function loop(T){
  if(canMove&&!mapOpen&&!invOpen){
   let dx=0,dz=0,run=false;
   if(K.KeyW)dz=-1;if(K.KeyS)dz=1;if(K.KeyA)dx=-1;if(K.KeyD)dx=1;
-  if(tch&&tx<innerWidth/2){dx=mx/36;dz=my/36}
+  if(moveId!==null){dx=moveX/36;dz=moveY/36}
   const mag=Math.hypot(dx,dz);if(mag>1){dx/=mag;dz/=mag}
-  run=(K.ShiftLeft||(tch&&Math.hypot(mx,my)>28))&&!P.air&&dz<0;P.run=run;
+  run=(K.ShiftLeft||(moveId!==null&&Math.hypot(moveX,moveY)>28))&&!P.air&&dz<0;P.run=run;
   const sp=(run?6.2:3.2)*dt;
   if(mag>.1){
    const s=Math.sin(yaw),c=Math.cos(yaw),nx=P.x+(dx*c+dz*s)*sp,nz=P.z+(-dx*s+dz*c)*sp;
@@ -1305,7 +1426,6 @@ function loop(T){
  cam.rotation.set(pitch,yaw,0);
  torch.position.set(P.x,P.fy+1.5,P.z);
 
- /* Truhen-Animation */
  if(chestState==='shaking'){
   chestT+=dt;
   chest.position.x=SX+1.5+Math.sin(chestT*45)*0.025;
@@ -1326,7 +1446,6 @@ function loop(T){
   }
  }
 
- /* Brief-Animation */
  if(letterState==='emerging'){
   letterT+=dt;
   const p=Math.min(1,letterT/1.3);
