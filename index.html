@@ -33,8 +33,6 @@ canvas{display:block}
 #mt button.a{background:var(--gold);color:#111}
 #mq{position:absolute;left:10px;right:10px;bottom:calc(10px + env(safe-area-inset-bottom,0px));padding:10px 14px;font-size:13px;line-height:1.6}
 #mc{position:absolute;inset:0}
-
-/* ---------- Overlays ---------- */
 .ov{position:fixed;inset:0;z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:22px;
  background:radial-gradient(ellipse at center,#10131c,#000 78%);overflow-y:auto;overflow-x:hidden}
 .ov h1{font-size:clamp(30px,9vw,62px);letter-spacing:7px;color:#e6edfa;text-shadow:0 0 36px rgba(90,140,255,.55);font-weight:800}
@@ -155,7 +153,7 @@ scene.add(new THREE.AmbientLight(0xffffff,.85),new THREE.HemisphereLight(0xcfe0f
 const torch=new THREE.PointLight(0xfff0d0,.7,24,1);scene.add(torch);
 
 /* ================= AUDIO ================= */
-let ac=null,master=null,sfxBus=null,ambBus=null,rainG=null,nbuf=null,ambStarted=false;
+let ac=null,master=null,sfxBus=null,ambBus=null,rainG=null,nbuf=null;
 function A(){
   if(!ac){
     try{
@@ -167,23 +165,19 @@ function A(){
       nbuf=ac.createBuffer(1,len,ac.sampleRate);
       const d=nbuf.getChannelData(0);
       for(let i=0;i<len;i++)d[i]=Math.random()*2-1;
-      // Regen
       const src=ac.createBufferSource();src.buffer=nbuf;src.loop=true;
       const lp=ac.createBiquadFilter();lp.type='lowpass';lp.frequency.value=1100;lp.Q.value=.7;
       rainG=ac.createGain();rainG.gain.value=.0;
       src.connect(lp);lp.connect(rainG);rainG.connect(ambBus);src.start();
-      // Raum-Drone
       const o1=ac.createOscillator(),o2=ac.createOscillator();
       o1.type='sine';o1.frequency.value=51;o2.type='sine';o2.frequency.value=77.3;
       const dg=ac.createGain();dg.gain.value=.06;
       const dlp=ac.createBiquadFilter();dlp.type='lowpass';dlp.frequency.value=190;
       o1.connect(dg);o2.connect(dg);dg.connect(dlp);dlp.connect(ambBus);o1.start();o2.start();
-      // leises Rauschen als Schul-"Grundrauschen"
       const src2=ac.createBufferSource();src2.buffer=nbuf;src2.loop=true;
       const bp=ac.createBiquadFilter();bp.type='bandpass';bp.frequency.value=400;bp.Q.value=.4;
       const g2=ac.createGain();g2.gain.value=.012;
       src2.connect(bp);bp.connect(g2);g2.connect(ambBus);src2.start();
-      ambStarted=true;
     }catch(e){}
   }
   if(ac&&ac.state==='suspended')ac.resume();
@@ -231,7 +225,6 @@ const sfx={
   quest:()=>{tone(523,.18,.06,'triangle');tone(659,.18,.06,'triangle',.13);tone(784,.32,.07,'triangle',.26)},
   ui:()=>{tone(520,.07,.045,'triangle');tone(780,.09,.035,'sine',.05)}
 };
-function applyAmbient(){if(rainG)rainG.gain.value=0}
 
 /* ================= BAUMATERIAL ================= */
 const MC={},mat=c=>MC[c]||(MC[c]=new THREE.MeshLambertMaterial({color:c})),col=[],ALL=99;
@@ -445,7 +438,6 @@ function winWall(z,x1,x2,f,y0,wc){let p=x1;for(const c of wc){W(p,c-1.2,z-.15,z+
  W(p,x2,z-.15,z+.15,y0,3.5,extM,f,false);col.push({a:x1,b:x2,c:z-.15,e:z+.15,f})}
 const spk=(x,y,z)=>{const m=box(x,y,z,.45,.3,.28,spkM);box(x,y,z+(z>0?-.15:.15),.3,.2,.02,0x555555);SPK.push(m)};
 
-/* ---------- Einrichtung ---------- */
 function furnish(r){
   const t=r.type,cx=r.cx,y0=r.y0,s=r.s,f=r.f;
   const RY=ry=>ry+(s>0?Math.PI:0);
@@ -461,10 +453,8 @@ function furnish(r){
       put(gDesk(1.3,.66,.72,0xb08a55),ox,d,0);
       put(gChair(0x5a4a3a),ox,d-.82,0,Math.PI);
     }
-    // Lehrertisch + Stuhl
     put(gDesk(2.2,.85,.76,0x8a6a44),0,13.3,0);solid(2.2,.85,0,13.3);
     put(gChair(0x4a3a2a),0,12.1,0,0);
-    // Tafel
     bx(5.7,1.95,.09,0,14.82,1.1,0x6b4a2a);
     bx(5.4,1.7,.06,0,14.74,1.22,0x1e3a2a);
     bx(5.6,.09,.24,0,14.66,1.02,0x6b4a2a);
@@ -472,7 +462,6 @@ function furnish(r){
     poster('LERNE|FÜR|MORGEN','#3d5a80',-6.4,14.7,1.95,0);
     poster('DEUTSCH|IST|COOL','#6b4a7c',6.4,14.7,1.95,0);
     clock(0,14.6,2.9);
-    // Seitenwände
     bx(.9,1.2,.06,-7.7,10,1.5,0x8a8f96);
     bx(.06,1.2,.9,7.7,10,1.5,0x8a8f96);
     put(gBin(),-7,4,0);put(gPlant(),7.2,13.6,0);
@@ -485,7 +474,6 @@ function furnish(r){
     solid(3.6,1.4,-3.6,7.5);
     put(gShelf(1.8,2.1,.42,0x5a4432),-7.1,10.5,0,Math.PI/2);solid(1.8,.42,-7.1,10.5);
     put(gShelf(1.8,2.1,.42,0x5a4432),6.9,11,0,-Math.PI/2);solid(1.8,.42,6.9,11);
-    // Kaffeemaschine
     bx(.5,.6,.45,6.6,4.6,0,0x2a2a2e);bx(.3,.06,.3,6.6,4.6,.62,0x111111);bx(.14,.2,.14,6.6,4.6,.34,0xd8d8d8);
     poster('KOLLEGIUM|SITZUNG|14:00','#4a5560',0,14.7,1.9,0);
     clock(0,14.6,2.9);
@@ -496,9 +484,7 @@ function furnish(r){
     put(gDesk(1.7,.8,.74,0x8a6a44),-4.5,6,0);solid(1.7,.8,-4.5,6);
     put(gChair(0x4a3a2a),-4.5,4.8,0,0);
     put(gComputer(),-4.5,6,.74,0);
-    // Aktenschränke
     for(const ox of[-6.9,-4.9,4.9,6.9]){bx(.95,2.2,.6,ox,14.2,0,0x5a4432);solid(.95,.6,ox,14.2)}
-    // Safe
     bx(.7,1,.6,6.4,3.6,0,0x3a4048);bx(.5,.06,.04,6.4,3.6,.85,0x8a8f96);
     poster('SEKRETARIAT|BÜROZEITEN|7–13','#7c6a3a',0,14.7,2.1,0);
     clock(0,14.6,2.9);
@@ -523,21 +509,16 @@ function furnish(r){
   }
   else if(t==='lab'){
     for(const ox of[-4.4,4.4]) for(const d of[5.4,8.4,11.4]){
-      bx(2.5,.06,1,.06,0,0,0x2f343a); // dummy um Position zu halten (nicht sichtbar relevant)
       put(gDesk(2.5,1,.92,0x33383f),ox,d,0);
-      // Spüle + Armatur
       bx(.5,.06,.4,ox-.8,d,.93,0x8a8f96);
       cyl(.025,.025,.35,ox-.8,d,.95,0xb8bcc2,8);
       bx(.22,.05,.06,ox-.8,d,1.28,0xb8bcc2);
-      // Gasventil
       cyl(.05,.05,.12,ox+.9,d,.96,0xc0a020,8);
-      // Glasgefäße
       cyl(.07,.07,.24,ox-.3,d,1.0,0xd8ecf0,10);
       cyl(.09,.06,.3,ox+.2,d,1.0,0xc8e0e8,10);
       put(gStool(0x3a3f46),ox,d+.85,0);
       put(gStool(0x3a3f46),ox,d-.85,0);
     }
-    // Abzugsschrank
     bx(2,1.6,.9,-6.6,11,0,0x3a4048);solid(2,.9,-6.6,11);
     bx(1.8,.15,.8,-6.6,11,1.6,0x8a8f96);
     poster('PERIODEN|SYSTEM','#4a7c4a',0,14.7,1.9,0);
@@ -553,11 +534,9 @@ function furnish(r){
       put(gLockers(5,0x4a5560),6.4,4.2+k*3.2,0,-Math.PI/2);
       solid(.5,2.5,6.4,4.2+k*3.2);
     }
-    // Spind 47 (rot)
     bx(.55,1.95,.5,6.4,8.5,0,0xb0533a);bx(.5,1.85,.03,6.4,8.5,.04,0x8a3a28);
     bx(.04,.16,.04,6.2,8.5,1.1,0xd8d8d8);
     sign('47',6.13,y0+1.5,8.5,-Math.PI/2,.32,.16,'#ddd','#000',46);
-    // Bänke
     bx(4,.1,.36,0,3.2,.45,0x8a6a44);bx(.12,.45,.32,-1.9,3.2,0,0x6b4a2a);bx(.12,.45,.32,1.9,3.2,0,0x6b4a2a);
     bx(4,.1,.36,0,13.6,.45,0x8a6a44);bx(.12,.45,.32,-1.9,13.6,0,0x6b4a2a);bx(.12,.45,.32,1.9,13.6,0,0x6b4a2a);
     poster('UMKLEIDE|ORDNUNG|BITTE','#7c4a4a',0,14.7,2.1,0);
@@ -569,7 +548,6 @@ function furnish(r){
     for(const ox of[-2,0,2]){bx(1.4,.08,1,ox,12.6,.75,0xd8cdb0);bx(.1,.75,.9,ox-.6,12.6,0,0x6b4a2a);bx(.1,.75,.9,ox+.6,12.6,0,0x6b4a2a)}
     bx(2.4,.06,1,0,4.4,.8,0x8a6a44);bx(.12,.8,.9,-1,4.4,0,0x6b4a2a);bx(.12,.8,.9,1,4.4,0,0x6b4a2a);
     put(gShelf(1.6,1.5,.4,0x5a4432),6.7,12.6,0,-Math.PI/2);solid(1.6,.4,6.7,12.6);
-    // Farbtöpfe
     for(let i=0;i<6;i++)cyl(.07,.07,.16,-2.4+i*.3,4.4,.86,BOOKC[i*2],8);
     bx(.6,.06,.5,0,4.4,.86,0xe8e2d2);
     poster('KUNST','#7c5a3a',0,14.7,1.9,0);
@@ -582,12 +560,9 @@ function furnish(r){
     for(const ox of[-6.4,-4.6,-2.8])put(gMusicStand(),ox,4.6,0,Math.PI);
     for(const ox of[-6.4,-4.6,-2.8])put(gChair(0x4a3a2a),ox,5.6,0,0);
     for(const ox of[1.2,3.2,5.4])for(const d of[6,8.4,10.8])put(gChair(0x5a4a3a),ox,d,0,Math.PI);
-    // Xylophon
     bx(1.1,.09,.5,4.2,12.6,.85,0x8a6a44);bx(.08,.85,.45,3.75,12.6,0,0x6b4a2a);bx(.08,.85,.45,4.65,12.6,0,0x6b4a2a);
     for(let i=0;i<8;i++)bx(.09,.05,.42,3.8+i*.12,12.6,.95,0xd8d0b0);
-    // Trommel
     cyl(.3,.3,.4,6.6,4.6,.55,0xd8d0c0,16);cyl(.31,.31,.06,6.6,4.6,.75,0x2a2a2e,16);
-    // Akustikpaneele
     for(const ox of[-6.6,6.6])for(let i=0;i<3;i++)bx(.1,.9,1.4,ox,8,1.3+i*1.05,0x3a4a44);
     poster('MUSIK','#5a4a7c',0,14.7,1.9,0);
     clock(0,14.6,2.9);
@@ -601,7 +576,6 @@ function furnish(r){
       put(gChair(0x3a4048),ox,d-.9,0,Math.PI);
       put(gChair(0x3a4048),ox,d+.9,0,0);
     }
-    // Serverschrank
     bx(.9,1.9,.8,-7,11.4,0,0x22262c);solid(.9,.8,-7,11.4);
     for(let i=0;i<6;i++)bx(.7,.1,.7,-7,11.4,.35+i*.26,0x3a4048);
     poster('PC-RAUM|REGELN','#3a6a7c',0,14.7,1.9,0);
@@ -619,7 +593,6 @@ function furnish(r){
     for(const p of[[-2.4,3.4,.7],[-2.4,4.6,.55],[-1,3.6,.8],[5,4.2,.65],[5.2,7,.9],[-4.6,11,.6]])
       box(cx+p[0],y0+p[2]/2,s*p[1],p[2],p[2],p[2],0x9a7b4a,false,f);
     put(gShelf(1.7,2.2,.45,0x5a4432),6.8,10,0,-Math.PI/2);solid(1.7,.45,6.8,10);
-    // Leiter
     bx(.5,.06,.12,3.4,12.6,.5,0x8a6a44);bx(.5,.06,.12,3.4,12.6,1.5,0x8a6a44);
     bx(.06,1.6,.1,3.2,12.6,0,0x8a6a44);bx(.06,1.6,.1,3.6,12.6,0,0x8a6a44);
     poster('LAGER','#5a5048',0,14.7,1.9,0);
@@ -628,11 +601,8 @@ function furnish(r){
     for(const ox of[-4.4,4.4]){bx(3,2,.6,ox,14.2,0,0x5a5f66);solid(3,.6,ox,14.2)}
     bx(.6,1,.7,-6.6,5,0,0x2a6fb0);bx(.5,.5,.5,-6.6,5,.7,0x3a82c0);
     put(gBin(),-5.4,4.4,0);
-    // Wischmopp
     cyl(.03,.03,1.5,-3.4,4.2,.2,0x8a6a44,8);cyl(.14,.08,.28,-3.4,4.2,0,0xd8d8d8,10);
-    // Werkzeugkiste
     bx(.7,.35,.4,5.6,5,.0,0xb03a2a);bx(.7,.06,.4,5.6,5,.35,0x8a2a1a);
-    // Rohre
     put(gPipes(),0,14.4,0,0);
     poster('HAUSMEISTER|SCHLÜSSEL','#5a5f66',0,14.7,2.9,0);
     put(gFireExt(),6.9,4.6,0);
@@ -652,15 +622,14 @@ for(const f of[0,1]){const y0=f*UB;
    box(cx,y0+3.46,s*8.5,1.6,.06,.4,lampM);
    sign(name,cx,y0+2.85,s*1.82,s<0?0:Math.PI);
    const r={name,type,f,s,i,x1,x2,cx,y0,z1:zr[0],z2:zr[1]};ROOMS.push(r);furnish(r)}}
- // Flur-Deko
- if(f===0){putFlur(f,y0)}
+ if(f===0)putFlur(f,y0);
 }
 function putFlur(f,y0){
-  for(const x of[-34,-14,6,26]){
-    const p=gPoster(['REGENPAUSE|HALLE BLEIBEN','AUSGANG|BEI ALARM','STUNDENPLAN|A–F','SCHULFEST|SA 15:00'][((x+34)/20)|0]||'INFO',
-      ['#3d5a80','#8c3b3a','#4a7c4a','#7c5a3a'][Math.abs((x+34)/20|0)%4]);
-    p.position.set(x,y0+2.1,-1.92);scene.add(p);
-  }
+  const names=['REGENPAUSE|HALLE BLEIBEN','AUSGANG|BEI ALARM','STUNDENPLAN|A–F','SCHULFEST|SA 15:00'];
+  const cols=['#3d5a80','#8c3b3a','#4a7c4a','#7c5a3a'];
+  [-34,-14,6,26].forEach((x,i)=>{
+    const p=gPoster(names[i],cols[i]);p.position.set(x,y0+2.1,-1.92);scene.add(p);
+  });
   for(const x of[-24,16]){
     const b=new THREE.Mesh(new THREE.BoxGeometry(.5,.9,.35),mat(0x6b4a2a));b.position.set(x,y0+.5,1.85);scene.add(b);
   }
@@ -670,7 +639,6 @@ function putFlur(f,y0){
   const b1=gBin();b1.position.set(-41.5,y0,1.5);scene.add(b1);
   const b2=gBin();b2.position.set(39.5,y0,1.5);scene.add(b2);
 }
-/* Böden, Decken, Treppe */
 box(-1,-.1,0,92,.2,30,0x6b6152);box(-1,UB-.2,0,92,.4,30,0x5a5148);box(-1,UB*2-.2+.15,0,92,.3,30,0x8d8678);
 for(let k=0;k<6;k++)box(-43.4+k*.85,(k+1)*.275,1.4,.85,(k+1)*.55,1.2,0x8a8478,true,0);
 sign('TREPPE',-43.6,2.2,-1.8,0,1.3,.35,'#3a2a1a','#ffe9a8');
@@ -766,7 +734,7 @@ function renderQ(){const c=Q[q];$('quest').innerHTML=`<b>Aufgabe ${q+1}/5</b>${c
  $('mq').innerHTML=Q.map((o,i)=>`<div style="color:${i<q?'#5fd38a':i===q?'#ffcf4a':'#7f8ea8'}">${i<q?'✓':i+1+'.'} ${o.t} — ${o.n}</div>`).join('')}
 
 /* ============ INTERAKTION (Klick / Tippen) ============ */
-const IT=[],hitList=[];
+const IT=[],hitList=[];let near=null;
 const hitMat=new THREE.MeshBasicMaterial({visible:false});
 function hb(x,y,z,w,h,d,f){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),hitMat);m.position.set(x,y,z);m.userData.f=f;scene.add(m);hitList.push(m);return m}
 function addI(mesh,x,z,f,l,fn,r){const o={x,z,f,l,fn,r:r||2.2,mesh};mesh.userData.I=o;IT.push(o);return o}
@@ -779,12 +747,19 @@ function pickNDC(ndx,ndy){
   for(const h of hits){const o=h.object.userData.I;if(o&&o.f===P.f)return o}
   return null;
 }
-function nearest(){ray.setFromCamera(CENTER,cam);const hits=ray.intersectObjects(hitList,false);
-  for(const h of hits){const o=h.object.userData.I;if(o&&o.f===P.f)return o}return null}
+function nearest(){
+  ray.setFromCamera(CENTER,cam);
+  const hits=ray.intersectObjects(hitList,false);
+  for(const h of hits){const o=h.object.userData.I;if(o&&o.f===P.f)return o}
+  let b=null,bd=1e9;
+  for(const o of IT){if(o.f!==P.f)continue;const d=Math.hypot(o.x-P.x,o.z-P.z);
+    if(d<(o.r||2.2)&&d<bd){bd=d;b=o}}
+  return b
+}
 
 const note=new THREE.Mesh(new THREE.PlaneGeometry(.4,.5),new THREE.MeshBasicMaterial({map:tex(128,160,(g,w,h)=>{g.fillStyle='#f5f0dc';g.fillRect(0,0,w,h);g.fillStyle='#333';g.font='bold 15px serif';g.fillText('Spind 47.',14,44);g.font='13px serif';g.fillText('Der Schlüssel',14,74);g.fillText('ist dort.',14,92);g.fillText('– M.',14,134)}),side:THREE.DoubleSide}));
 note.position.set(-18.5,.85,-6);note.rotation.x=-Math.PI/2;note.rotation.z=.3;scene.add(note);
-addI(hb(-18.5,1.05,-6,.9,.8,.9,0),-18.5,-6,0,'Notiz aufheben',()=>{if(q>0)return;q=1;note.visible=false;sfx.pickup();sfx.paper();
+addI(hb(-18.5,1.25,-6,1.1,1.9,1.1,0),-18.5,-6,0,'Notiz aufheben',()=>{if(q>0)return;q=1;note.visible=false;sfx.pickup();sfx.paper();
  say('„Spind 47 in der Umkleide. Der Schlüssel liegt dort versteckt. – M.“',5);renderQ();sfx.quest()});
 
 addI(hb(-6.4,1.1,8.5,1.0,2.2,1.0,0),-6.4,8.5,0,'Spind 47 öffnen',()=>{
@@ -963,7 +938,6 @@ function updatePlayer(dt){
   if(touch){ix=mv.x;iz=mv.y}
   const l=Math.hypot(ix,iz);if(l>1){ix/=l;iz/=l}
   P.run=!!(keys.ShiftLeft||keys.ShiftRight||(touch&&Math.hypot(mv.x,mv.y)>.85));
-  // Springen
   if(!P.air&&!touch&&keys.Space)jump();
   if(P.air||P.yOff>0){
     P.vy-=18*dt;P.yOff+=P.vy*dt;
@@ -989,7 +963,6 @@ function loop(t){
       if(nn&&!mapOpen){p.textContent=(touch?'Tippen: ':'[Klick] ')+nn.l;p.style.opacity=1;ch.classList.add('on')}
       else{p.style.opacity=0;ch.classList.remove('on')}}
     $('bE').classList.toggle('on',P.air);
-    // Gewitter
     thunderT-=dt;
     if(thunderT<=0){thunderT=20+Math.random()*38;sfx.thunder();skyFlash=1}
     skyFlash=Math.max(0,skyFlash-dt*1.8);
@@ -1002,7 +975,7 @@ function loop(t){
   rg.attributes.position.needsUpdate=true;
   if(flash>0){flash-=dt;const v=flash>0?.5+.5*Math.sin(t/110):0;spkM.emissive.setRGB(v*.9,v*.65,v*.25)}
   rain.visible=P.f>=0;
-  if(rainG&&ac)rainG.gain.value=(P.f<0?.008:.055)*(P.f>=0?1:.6);
+  if(rainG&&ac)rainG.gain.value=(P.f<0?.008:.055);
   const bob=P.air?0:Math.sin(P.bob)*.035*(P.run?1.5:1);
   cam.position.set(P.x,P.fy+P.yOff+1.6+bob,P.z);
   cam.rotation.y=yaw;cam.rotation.x=pitch;
