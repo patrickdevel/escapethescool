@@ -277,7 +277,7 @@ const windowMat  = new THREE.MeshBasicMaterial({ color: 0xa8d4f0 });
 const lampMat    = new THREE.MeshBasicMaterial({ color: 0xfff0c0 });
 
 /* ============================================================
-   KOLLISION + WANDHELFER
+   KOLLISION
    ============================================================ */
 const colliders = [];
 
@@ -303,14 +303,12 @@ function vw(x, z1, z2, floor, y = 0, mat = wallMat, h = 3.5) {
   return wall(x, (z1+z2)/2, 0.3, Math.abs(z2-z1), h, y, mat, floor);
 }
 
-/* Wand mit Türrahmen (Lücke + Sturz) */
 function hwDoor(z, x1, x2, doorX1, doorX2, floor, y = 0, mat = wallMat, h = 3.5, doorH = 2.4) {
   if (doorX1 > x1 + 0.05) hw(z, x1, doorX1, floor, y, mat, h);
   if (doorX2 < x2 - 0.05) hw(z, doorX2, x2, floor, y, mat, h);
   const w = doorX2 - doorX1;
   if (w > 0.05) {
     wall((doorX1+doorX2)/2, z, w, 0.3, h - doorH, y + doorH, mat, floor, false);
-    // Türrahmen-Seiten
     box(doorX1, y + doorH/2, z, 0.1, doorH, 0.35, 0x9a8663);
     box(doorX2, y + doorH/2, z, 0.1, doorH, 0.35, 0x9a8663);
   }
@@ -457,23 +455,21 @@ pointLight(205, 3.0, 0, 0xff8866, 1.0, 30);
 const FLOOR_H = 3.5;
 const UPPER_BASE = 3.9;
 
-// Außenhülle
 wall(3.5, -15, 87, 0.4, 8.0, 0, extWallMat, -1);
 wall(3.5, 15, 87, 0.4, 8.0, 0, extWallMat, -1);
 wall(45, 0, 0.4, 30, 8.0, 0, extWallMat, -1);
 wall(-38, -10.5, 0.4, 9, 8.0, 0, extWallMat, -1);
 wall(-38, 10.5, 0.4, 9, 8.0, 0, extWallMat, -1);
 
-// Treppenturm
 wall(-45, 0, 0.4, 12, 8.0, 0, extWallMat, -1);
 wall(-41.5, -6, 7, 0.4, 8.0, 0, extWallMat, -1);
 wall(-41.5, 6, 7, 0.4, 8.0, 0, extWallMat, -1);
 
-// Deckenslab + Dach – NICHT SOLIDE (Kollision würde ganze Map blockieren)
+// Decken + Dach NICHT SOLIDE
 wall(3.5, 0, 87, 30, 0.4, FLOOR_H, ceilMat, -1, false);
 wall(3.5, 0, 87, 30, 0.3, FLOOR_H + 0.4 + FLOOR_H, ceilMat, -1, false);
 
-/* ---------- FENSTER ---------- */
+/* Fenster */
 function addWindowRow(z, xStart, xEnd, y, spacing = 5) {
   for (let x = xStart; x <= xEnd; x += spacing) {
     box(x, y, z, 1.7, 1.3, 0.12, 0x3a3a3a);
@@ -499,7 +495,7 @@ addWindowRow(14.75, -34, 42, 5.9, 5);
 addWindowCol(44.75, -12, 12, 2.2, 5);
 addWindowCol(44.75, -12, 12, 5.9, 5);
 
-/* ---------- EG: KORRIDORWÄNDE (mit Türen) ---------- */
+/* Korridorwände EG */
 hwDoor(-2, -38, -24, -32, -30, 0);
 hwDoor(-2, -24, -10, -18, -16, 0);
 hwDoor(-2, -10, 6, -3, -1, 0);
@@ -515,19 +511,19 @@ hwDoor(2, 26, 38, 31, 33, 0);
 vw(38, -2, 2, 0);
 vwDoor(-38, -6, 6, -1.5, 1.5, 0, 0, wallMat, 3.5, 2.6);
 
-/* ---------- EG: RAUMTRENNWÄNDE NORD ---------- */
+/* Raumtrenner EG Nord */
 vw(-24, -15, -2, 0);
 vw(-10, -15, -2, 0);
 vw(6, -15, -2, 0);
 vw(22, -15, -2, 0);
 
-/* ---------- EG: RAUMTRENNWÄNDE SÜD ---------- */
+/* Raumtrenner EG Süd */
 vw(-22, 2, 15, 0);
 vw(-6, 2, 15, 0);
 vw(10, 2, 15, 0);
 vw(26, 2, 15, 0);
 
-/* ---------- OG: KORRIDORWÄNDE ---------- */
+/* OG Wände */
 const OG = 1;
 const yU = UPPER_BASE;
 
@@ -553,7 +549,7 @@ vw(-6, 2, 15, OG, yU);
 vw(10, 2, 15, OG, yU);
 vw(26, 2, 15, OG, yU);
 
-/* ---------- FUSSBÖDEN ---------- */
+/* Fußböden */
 const gFloor = new THREE.Mesh(new THREE.BoxGeometry(87, 0.2, 30), floorMat);
 gFloor.position.set(3.5, -0.1, 0);
 scene.add(gFloor);
@@ -569,7 +565,7 @@ const tFloor2 = new THREE.Mesh(new THREE.BoxGeometry(7, 0.05, 12), upperFloorMat
 tFloor2.position.set(-41.5, UPPER_BASE - 0.02, 0);
 scene.add(tFloor2);
 
-/* ---------- LAMPEN ---------- */
+/* Lampen */
 function ceilingLamp(x, y, z) {
   box(x, y + 0.02, z, 1.2, 0.1, 0.3, 0x444444);
   const l = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.05, 0.2), lampMat);
@@ -581,9 +577,7 @@ for (let x = -34; x <= 42; x += 8) {
   ceilingLamp(x, FLOOR_H + UPPER_BASE + 0.4, 0);
 }
 
-/* ============================================================
-   KLASSENZIMMER (Start)
-   ============================================================ */
+/* Klassenzimmer Start */
 function makeDesk(x, z) {
   box(x, 0.72, z, 1.25, 0.08, 0.72, 0x9a7b52);
   box(x - 0.55, 0.36, z, 0.07, 0.72, 0.68, 0x7d6242);
@@ -594,14 +588,11 @@ const deskCols = [-34, -31, -28, -25];
 const deskRows = [7, 10, 13];
 for (const cx of deskCols) for (const rz of deskRows) makeDesk(cx, rz);
 
-// Tafel
 box(-28, 2.0, 2.28, 6.2, 1.7, 0.1, 0x1e3a2a);
 box(-28, 2.0, 2.33, 5.8, 1.4, 0.02, 0x24463a);
 box(-28, 0.95, 2.4, 6.4, 0.12, 0.3, 0x7d6242);
 
-/* ============================================================
-   RAUM B (Spinde)
-   ============================================================ */
+/* Spinde */
 for (let i = 0; i < 8; i++) {
   const z = 4 + i * 1.4;
   box(-21.3, 1.0, z, 0.5, 2.0, 0.9, 0x4a5560);
@@ -613,7 +604,7 @@ for (let i = 0; i < 6; i++) {
   box(-6.43, 1.0, z, 0.03, 1.85, 0.88, 0x39424c);
 }
 
-/* Spezial-Spind 47 */
+/* Spind 47 */
 const lockerGroup = new THREE.Group();
 lockerGroup.position.set(-12, 0, 10);
 scene.add(lockerGroup);
@@ -646,7 +637,7 @@ kellerKeyMesh.rotation.y = -Math.PI / 2;
 kellerKeyMesh.visible = false;
 scene.add(kellerKeyMesh);
 
-/* Notiz auf Boden */
+/* Notiz */
 (function(){
   const cv = document.createElement('canvas');
   cv.width = 128; cv.height = 160;
@@ -668,9 +659,7 @@ scene.add(kellerKeyMesh);
   window.__noteFloorMesh = note;
 })();
 
-/* ============================================================
-   LEHRERZIMMER
-   ============================================================ */
+/* Lehrerzimmer */
 box(-16, 0.76, -9, 3.2, 0.1, 1.3, 0x8a6a44);
 box(-17.4, 0.5, -8.2, 0.5, 0.06, 0.5, 0x333a44);
 box(-14.6, 0.5, -9.8, 0.5, 0.06, 0.5, 0x333a44);
@@ -678,17 +667,13 @@ box(-22, 1.1, -14.4, 0.7, 2.2, 0.7, 0x5a4432);
 box(-11, 1.1, -13.5, 0.7, 2.2, 0.7, 0x5a4432);
 box(-11, 1.1, -12.4, 0.7, 2.2, 0.7, 0x5a4432);
 
-/* Nachbar-Klassenzimmer N3 Deko */
 for (let i = 0; i < 4; i++) for (let j = 0; j < 3; j++) makeDesk(-6 + i * 3.5, -12 + j * 3);
 box(-2, 2.0, -14.2, 5, 1.6, 0.1, 0x1e3a2a);
 
-/* OG Deko */
 for (let i = 0; i < 5; i++) for (let j = 0; j < 4; j++) makeDesk(-30 + i * 3.5, -12 + j * 3);
 for (let i = 0; i < 5; i++) for (let j = 0; j < 4; j++) makeDesk(-4 + i * 3.5, 5 + j * 3);
 
-/* ============================================================
-   KELLER
-   ============================================================ */
+/* Keller */
 const CEL = { cx: 205, cz: 0 };
 const celWallMat = new THREE.MeshLambertMaterial({ color: 0x4a443c });
 vw(CEL.cx - 10, -8, 8, -1, 0, celWallMat, 3.5);
@@ -723,9 +708,7 @@ const cellarBackDoor = new THREE.Mesh(new THREE.BoxGeometry(1.5, 2.2, 0.12), doo
 cellarBackDoor.position.set(CEL.cx, 1.1, 7.8);
 scene.add(cellarBackDoor);
 
-/* ============================================================
-   SCHULHOF
-   ============================================================ */
+/* Schulhof */
 const YARD = { x: 400, z: 0 };
 const ground = new THREE.Mesh(new THREE.PlaneGeometry(160, 160), new THREE.MeshLambertMaterial({ color: 0x36402f }));
 ground.rotation.x = -Math.PI / 2;
@@ -808,6 +791,8 @@ class NPC {
     this.walkPhase = 0;
     this.idleTimer = 0.2 + Math.random() * 2.5;
     this.stuckTimer = 0;
+    // WICHTIG: In die globale Liste eintragen, damit update() läuft
+    npcs.push(this);
   }
   pickTarget() {
     if (this.waypoints.length === 0) {
@@ -952,7 +937,6 @@ let gameStarted = false;
 const keys = {};
 const moveInput = { x: 0, y: 0 };
 
-/* DOM-Refs */
 const overlay     = document.getElementById('overlay');
 const promptEl    = document.getElementById('prompt');
 const subtitleEl  = document.getElementById('subtitle');
@@ -969,9 +953,6 @@ const endOverlay  = document.getElementById('endOverlay');
 const endTitle    = document.getElementById('endTitle');
 const endText     = document.getElementById('endText');
 
-/* ============================================================
-   STORY STATE
-   ============================================================ */
 const game = {
   phase: 'menu',
   hasNote: false,
@@ -979,9 +960,6 @@ const game = {
   introTimer: 0
 };
 
-/* ============================================================
-   START / MENU
-   ============================================================ */
 let locked = false;
 
 function startGame(e) {
@@ -1056,9 +1034,7 @@ addEventListener('keydown', (e) => {
 });
 addEventListener('keyup', (e) => { keys[e.code] = false; });
 
-/* ============================================================
-   TOUCH-STEUERUNG
-   ============================================================ */
+/* Touch */
 function setupTouchControls() {
   const canvas = renderer.domElement;
   const JOY_R = 59;
@@ -1143,9 +1119,6 @@ function setupTouchControls() {
 }
 if (isTouch) setupTouchControls();
 
-/* ============================================================
-   UNTERTITEL
-   ============================================================ */
 let subTimer = null;
 function say(text, dur = 4.2) {
   subtitleEl.textContent = text;
@@ -1157,9 +1130,7 @@ function setObjective(text) {
   objectiveEl.innerHTML = text ? '▶ ' + text : '';
 }
 
-/* ============================================================
-   INTERAKTION
-   ============================================================ */
+/* Interaktion */
 const interactables = [];
 function addInteractable(x, y, z, floor, label, action, radius = 2.4) {
   const it = { pos: new THREE.Vector3(x, y, z), floor, label, action, radius, enabled: true };
@@ -1194,7 +1165,6 @@ function tryInteract() {
   nearest.action();
 }
 
-/* ---------- Interaktionen ---------- */
 const noteIt = addInteractable(-4, 0, 1, 0, 'Notiz aufheben', () => {
   game.hasNote = true;
   pickupSound();
@@ -1257,7 +1227,6 @@ addInteractable(CEL.cx, 1.1, 7.8, -1, 'Hintertür öffnen', () => {
   }, 800);
 }, 2.4);
 
-/* Treppe */
 addInteractable(-41.5, 0, 5.2, 0, 'Treppe hinauf', () => {
   fadeTo(() => {
     player.pos.set(-41.5, UPPER_BASE, -4.5);
@@ -1275,9 +1244,6 @@ addInteractable(-41.5, UPPER_BASE, -5.2, 1, 'Treppe hinunter', () => {
   }, 350);
 }, 2.0);
 
-/* ============================================================
-   FADE HELPER
-   ============================================================ */
 function fadeTo(cb, dur = 450) {
   canMove = false;
   fadeEl.style.transition = `opacity ${dur}ms ease`;
@@ -1291,9 +1257,6 @@ function fadeTo(cb, dur = 450) {
   }, dur + 60);
 }
 
-/* ============================================================
-   ENDE
-   ============================================================ */
 function endGame(title, text) {
   game.phase = 'end';
   canMove = false;
@@ -1304,7 +1267,7 @@ function endGame(title, text) {
 }
 
 /* ============================================================
-   UPDATE: SPIELER
+   UPDATE: SPIELER — korrigierte Rotationsformel
    ============================================================ */
 function updatePlayer(dt) {
   if (!canMove) return;
@@ -1324,8 +1287,9 @@ function updatePlayer(dt) {
 
   if (Math.abs(ix) > 0.01 || Math.abs(iz) > 0.01) {
     const sin = Math.sin(yaw), cos = Math.cos(yaw);
-    const mx = (ix * cos - iz * sin) * spd * dt;
-    const mz = (ix * sin + iz * cos) * spd * dt;
+    // FIX: Vorzeichen korrigiert (war vorher spiegelverkehrt bei manchen yaw-Werten)
+    const mx = (ix * cos + iz * sin) * spd * dt;
+    const mz = (-ix * sin + iz * cos) * spd * dt;
 
     const nx = player.pos.x + mx;
     const nz = player.pos.z + mz;
