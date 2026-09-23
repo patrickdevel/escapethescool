@@ -311,9 +311,8 @@ function hwDoor(z, x1, x2, doorX1, doorX2, floor, y = 0, mat = wallMat, h = 3.5,
   if (w > 0.05) {
     wall((doorX1+doorX2)/2, z, w, 0.3, h - doorH, y + doorH, mat, floor, false);
     // Türrahmen-Seiten
-    const frameMat = new THREE.MeshLambertMaterial({ color: 0x9a8663 });
-    box(doorX1, y + doorH/2, z, 0.1, doorH, 0.35, frameMat.color.getHex());
-    box(doorX2, y + doorH/2, z, 0.1, doorH, 0.35, frameMat.color.getHex());
+    box(doorX1, y + doorH/2, z, 0.1, doorH, 0.35, 0x9a8663);
+    box(doorX2, y + doorH/2, z, 0.1, doorH, 0.35, 0x9a8663);
   }
 }
 function vwDoor(x, z1, z2, doorZ1, doorZ2, floor, y = 0, mat = wallMat, h = 3.5, doorH = 2.4) {
@@ -470,9 +469,9 @@ wall(-45, 0, 0.4, 12, 8.0, 0, extWallMat, -1);
 wall(-41.5, -6, 7, 0.4, 8.0, 0, extWallMat, -1);
 wall(-41.5, 6, 7, 0.4, 8.0, 0, extWallMat, -1);
 
-// Deckenslab + Dach
-wall(3.5, 0, 87, 30, 0.4, FLOOR_H, ceilMat, -1);
-wall(3.5, 0, 87, 30, 0.3, FLOOR_H + 0.4 + FLOOR_H, ceilMat, -1);
+// Deckenslab + Dach – NICHT SOLIDE (Kollision würde ganze Map blockieren)
+wall(3.5, 0, 87, 30, 0.4, FLOOR_H, ceilMat, -1, false);
+wall(3.5, 0, 87, 30, 0.3, FLOOR_H + 0.4 + FLOOR_H, ceilMat, -1, false);
 
 /* ---------- FENSTER ---------- */
 function addWindowRow(z, xStart, xEnd, y, spacing = 5) {
@@ -501,23 +500,19 @@ addWindowCol(44.75, -12, 12, 2.2, 5);
 addWindowCol(44.75, -12, 12, 5.9, 5);
 
 /* ---------- EG: KORRIDORWÄNDE (mit Türen) ---------- */
-// Nordwand z=-2: Türen zu Räumen
-hwDoor(-2, -38, -24, -32, -30, 0);           // Lehrerzimmer
-hwDoor(-2, -24, -10, -18, -16, 0);           // Raum N2
-hwDoor(-2, -10, 6, -3, -1, 0);               // Raum N3
-hwDoor(-2, 6, 22, 13, 15, 0);                // Raum N4
-hwDoor(-2, 22, 38, 29, 31, 0);               // Raum N5
+hwDoor(-2, -38, -24, -32, -30, 0);
+hwDoor(-2, -24, -10, -18, -16, 0);
+hwDoor(-2, -10, 6, -3, -1, 0);
+hwDoor(-2, 6, 22, 13, 15, 0);
+hwDoor(-2, 22, 38, 29, 31, 0);
 
-// Südwand z=2
-hwDoor(2, -38, -22, -32, -30, 0);            // Startklassenzimmer
-hwDoor(2, -22, -6, -14, -12, 0);             // Spinde
-hwDoor(2, -6, 10, 2, 4, 0);                  // Raum S3
-hwDoor(2, 10, 26, 18, 20, 0);                // Raum S4
-hwDoor(2, 26, 38, 31, 33, 0);                // Raum S5
+hwDoor(2, -38, -22, -32, -30, 0);
+hwDoor(2, -22, -6, -14, -12, 0);
+hwDoor(2, -6, 10, 2, 4, 0);
+hwDoor(2, 10, 26, 18, 20, 0);
+hwDoor(2, 26, 38, 31, 33, 0);
 
-// Ostwand Korridor
 vw(38, -2, 2, 0);
-// Zwischenwände zum Turm (Korridor durchgang)
 vwDoor(-38, -6, 6, -1.5, 1.5, 0, 0, wallMat, 3.5, 2.6);
 
 /* ---------- EG: RAUMTRENNWÄNDE NORD ---------- */
@@ -618,13 +613,12 @@ for (let i = 0; i < 6; i++) {
   box(-6.43, 1.0, z, 0.03, 1.85, 0.88, 0x39424c);
 }
 
-/* Spezial-Spind 47 (Spieler bekommt Schlüssel) */
+/* Spezial-Spind 47 */
 const lockerGroup = new THREE.Group();
 lockerGroup.position.set(-12, 0, 10);
 scene.add(lockerGroup);
 box(0.25, 1.05, 0, 0.5, 2.1, 1.0, 0x3f4a56, lockerGroup);
 box(0.5, 2.15, 0, 0.6, 0.12, 1.1, 0x2b333c, lockerGroup);
-// Nummer 47
 (function(){
   const cv = document.createElement('canvas');
   cv.width = 64; cv.height = 32;
@@ -652,7 +646,7 @@ kellerKeyMesh.rotation.y = -Math.PI / 2;
 kellerKeyMesh.visible = false;
 scene.add(kellerKeyMesh);
 
-/* Notiz auf Boden im Korridor */
+/* Notiz auf Boden */
 (function(){
   const cv = document.createElement('canvas');
   cv.width = 128; cv.height = 160;
@@ -675,7 +669,7 @@ scene.add(kellerKeyMesh);
 })();
 
 /* ============================================================
-   LEHRERZIMMER (mit Tisch, Schränken)
+   LEHRERZIMMER
    ============================================================ */
 box(-16, 0.76, -9, 3.2, 0.1, 1.3, 0x8a6a44);
 box(-17.4, 0.5, -8.2, 0.5, 0.06, 0.5, 0x333a44);
@@ -745,7 +739,6 @@ box(YARD.x - 25, 6.2, YARD.z + 22, 42, 0.5, 2, 0x1e1e22);
 function makeJet() {
   const g = new THREE.Group();
   const mat = new THREE.MeshLambertMaterial({ color: 0x6d7883 });
-  const dark = new THREE.MeshLambertMaterial({ color: 0x2a2f36 });
   const glass = new THREE.MeshLambertMaterial({ color: 0x88ccff, transparent: true, opacity: 0.55 });
   const body = new THREE.Mesh(new THREE.CylinderGeometry(0.9, 0.65, 8, 8), mat);
   body.rotation.x = Math.PI / 2;
@@ -874,14 +867,12 @@ class NPC {
     }
     this.stuckTimer = 0;
 
-    // Drehung
     const targetYaw = Math.atan2(dirX, dirZ);
     let dYaw = targetYaw - this.group.rotation.y;
     while (dYaw > Math.PI) dYaw -= Math.PI * 2;
     while (dYaw < -Math.PI) dYaw += Math.PI * 2;
     this.group.rotation.y += dYaw * Math.min(1, dt * 7);
 
-    // Beinanimation
     this.walkPhase += dt * this.baseSpeed * 5;
     const s = Math.sin(this.walkPhase) * 0.55;
     legL.rotation.x = s;
@@ -908,7 +899,6 @@ function spawnStudent(floor, x, z) {
   });
 }
 
-/* Erdgeschoss-Schüler */
 const egStarts = [
   [-30, 6], [-28, 12], [-15, 8], [-12, 12],
   [-2, 6], [2, 10], [14, 6], [20, 12],
@@ -918,7 +908,6 @@ const egStarts = [
 ];
 for (const [x, z] of egStarts) spawnStudent(0, x, z);
 
-/* Obergeschoss-Schüler */
 const ogStarts = [
   [-30, 6], [-16, 8], [-2, 6], [14, 10], [30, 8],
   [-30, -8], [-14, -12], [4, -6], [20, -12],
@@ -926,7 +915,6 @@ const ogStarts = [
 ];
 for (const [x, z] of ogStarts) spawnStudent(1, x, z);
 
-/* Lehrer (laufen zwischen festen Punkten) */
 const TEACHER_COLORS = [0x2b2b3a, 0x3a2b2b, 0x1e2a3a, 0x3a3a2b];
 
 function spawnTeacher(floor, x, z, waypoints) {
@@ -941,11 +929,9 @@ function spawnTeacher(floor, x, z, waypoints) {
   });
 }
 
-/* Lehrer im EG: pendeln im Korridor + Lehrerzimmer */
 spawnTeacher(0, -28, 6, [{ x: -28, z: 6 }, { x: -20, z: 8 }, { x: -16, z: -6 }, { x: -28, z: -4 }]);
 spawnTeacher(0, 10, 0, [{ x: 0, z: -1 }, { x: 15, z: 1 }, { x: 25, z: -1 }, { x: 8, z: 1 }]);
 spawnTeacher(0, 30, 8, [{ x: 30, z: 8 }, { x: 34, z: -8 }, { x: 24, z: -6 }]);
-/* Lehrer OG */
 spawnTeacher(1, -20, 0, [{ x: -30, z: 1 }, { x: -10, z: -1 }, { x: 5, z: 1 }]);
 spawnTeacher(1, 25, 0, [{ x: 15, z: 0 }, { x: 34, z: -1 }, { x: 25, z: 1 }]);
 
@@ -953,7 +939,7 @@ spawnTeacher(1, 25, 0, [{ x: 15, z: 0 }, { x: 34, z: -1 }, { x: 25, z: 1 }]);
    SPIELER
    ============================================================ */
 const player = {
-  pos: new THREE.Vector3(-28, 0, 13),
+  pos: new THREE.Vector3(-32.5, 0, 12.5),
   eye: 1.6,
   walk: isMobile ? 3.8 : 4.3,
   run: isMobile ? 6.4 : 7.2,
@@ -987,7 +973,7 @@ const endText     = document.getElementById('endText');
    STORY STATE
    ============================================================ */
 const game = {
-  phase: 'menu', // menu | intro | explore | cellar | end
+  phase: 'menu',
   hasNote: false,
   hasKey: false,
   introTimer: 0
@@ -1033,7 +1019,6 @@ startBtn.addEventListener('click', startGame);
 startBtn.addEventListener('touchend', startGame, { passive: false });
 startBtn.addEventListener('pointerdown', (e) => e.stopPropagation());
 
-// Fallback: Enter startet das Spiel
 addEventListener('keydown', (e) => {
   if (!gameStarted && (e.code === 'Enter' || e.code === 'Space')) {
     startGame(e);
@@ -1043,7 +1028,6 @@ addEventListener('keydown', (e) => {
 restartBtn.addEventListener('click', () => location.reload());
 restartBtn.addEventListener('touchend', (e) => { e.preventDefault(); location.reload(); }, { passive: false });
 
-/* Pointer-Lock */
 renderer.domElement.addEventListener('click', () => {
   if (!locked && !isTouch && gameStarted) {
     const el = renderer.domElement;
@@ -1063,7 +1047,6 @@ document.addEventListener('mousemove', (e) => {
   pitch = Math.max(-1.4, Math.min(1.4, pitch));
 });
 
-/* Keyboard */
 addEventListener('keydown', (e) => {
   keys[e.code] = true;
   if (e.code === 'KeyE' && gameStarted) tryInteract();
@@ -1257,7 +1240,6 @@ const cellarIt = addInteractable(36, 1.2, -1.85, 0, 'Kellertür öffnen', () => 
   });
 }, 2.6);
 
-/* Keller-Fotos */
 photoMeshes.forEach((m, i) => {
   addInteractable(m.position.x, 1.8, m.position.z, -1, 'Foto ansehen', () => {
     if (i === 0) say('"Ein Lehrer. Auf der Rückseite steht: 1998. Regenpause."', 4.5);
@@ -1268,7 +1250,6 @@ photoMeshes.forEach((m, i) => {
   }, 2.0);
 });
 
-/* Hintertür im Keller → Ende */
 addInteractable(CEL.cx, 1.1, 7.8, -1, 'Hintertür öffnen', () => {
   doorSound();
   fadeTo(() => {
@@ -1276,7 +1257,7 @@ addInteractable(CEL.cx, 1.1, 7.8, -1, 'Hintertür öffnen', () => {
   }, 800);
 }, 2.4);
 
-/* Treppe zwischen den Etagen */
+/* Treppe */
 addInteractable(-41.5, 0, 5.2, 0, 'Treppe hinauf', () => {
   fadeTo(() => {
     player.pos.set(-41.5, UPPER_BASE, -4.5);
@@ -1328,7 +1309,6 @@ function endGame(title, text) {
 function updatePlayer(dt) {
   if (!canMove) return;
 
-  // Maus/Tastatur
   let ix = 0, iz = 0;
   if (keys['KeyW'] || keys['ArrowUp']) iz -= 1;
   if (keys['KeyS'] || keys['ArrowDown']) iz += 1;
@@ -1338,17 +1318,11 @@ function updatePlayer(dt) {
 
   const len = Math.hypot(ix, iz);
   if (len > 1) { ix /= len; iz /= len; }
-  if (isTouch) {
-    // Joystick: magnitude für Rennen
-    const mag = Math.hypot(moveInput.x, moveInput.y);
-    if (mag > 0.85) { /* rennen */ }
-  }
 
   const isRunning = keys['ShiftLeft'] || keys['ShiftRight'] || (isTouch && Math.hypot(moveInput.x, moveInput.y) > 0.85);
   const spd = isRunning ? player.run : player.walk;
 
   if (Math.abs(ix) > 0.01 || Math.abs(iz) > 0.01) {
-    // Bewegung relativ zur Blickrichtung (yaw)
     const sin = Math.sin(yaw), cos = Math.cos(yaw);
     const mx = (ix * cos - iz * sin) * spd * dt;
     const mz = (ix * sin + iz * cos) * spd * dt;
@@ -1365,7 +1339,6 @@ function updatePlayer(dt) {
       player.pos.z = nz;
     }
 
-    // Schrittsound
     if (!window.__stepT || performance.now() - window.__stepT > 380) {
       window.__stepT = performance.now();
       beep(90 + Math.random() * 25, 0.07, 0.03, 'triangle');
@@ -1388,7 +1361,6 @@ function loop(t) {
     for (const npc of npcs) npc.update(dt);
   }
 
-  // Kamera
   camera.position.set(player.pos.x, player.floorY + player.eye, player.pos.z);
   camera.rotation.y = yaw;
   camera.rotation.x = pitch;
@@ -1400,7 +1372,6 @@ function loop(t) {
 
 requestAnimationFrame(loop);
 
-/* UI initial */
 setObjective('');
 </script>
 </body>
